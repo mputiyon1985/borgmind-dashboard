@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Ignore workspace root middleware.ts
 };
 
 export default nextConfig;
