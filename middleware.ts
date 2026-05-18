@@ -1,6 +1,55 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { isAuthenticated, AUTH_COOKIE_NAME, generateAuthToken, getDashboardPassword } from './lib/auth';
+
+const AUTH_COOKIE_NAME = 'borgmind_auth';
+const AUTH_TOKEN_PREFIX = 'borgmind_';
+
+// Inline auth helpers — avoid Edge Runtime issues with lib imports
+function generateAuthToken(password: string): string {
+  return `${AUTH_TOKEN_PREFIX}${Buffer.from(password).toString('base64')}`;
+}
+
+function verifyAuthToken(token: string | undefined, password: string): boolean {
+  if (!token || !password) return false;
+  const expected = generateAuthToken(password);
+  return token === expected;
+}
+
+function getDashboardPassword(): string {
+  return process.env.DASHBOARD_PASSWORD || '';
+}
+
+function isAuthenticated(request: NextRequest): boolean {
+  const password = getDashboardPassword();
+  if (!password) {
+    console.warn('[Auth] DASHBOARD_PASSWORD not set — blocking all requests');
+    return false;
+  }
+
+  // Check cookie
+  const cookie = request.cookies.get(AUTH_COOKIE_NAME);
+  if (cookie && verifyAuthToken(cookie.value, password)) {
+    return true;
+  }
+
+  // Check Authorization header (Bearer token for API access)
+  const authHeader = request.headers.get('authorization');
+  if (authHeader) {
+    const bearerToken = authHeader.replace('Bearer ', '').trim();
+    if (verifyAuthToken(bearerToken, password)) {
+      return true;
+    }
+  }
+
+  // Check query param (for testing / curl)
+  const url = new URL(request.url);
+  const queryToken = url.searchParams.get('auth');
+  if (queryToken && verifyAuthToken(queryToken, password)) {
+    return true;
+  }
+
+  return false;
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -24,12 +73,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check if authenticated
-  const cookie = request.cookies.get(AUTH_COOKIE_NAME);
-  const token = cookie?.value;
-  const expectedToken = generateAuthToken(password);
-
-  if (token === expectedToken) {
+  // Check if authenticated using all methods
+  if (isAuthenticated(request)) {
     return NextResponse.next();
   }
 
