@@ -5,9 +5,8 @@ export async function GET() {
   return NextResponse.json({
     hasPassword: !!pwd,
     passwordLength: pwd.length,
-    first3: pwd.slice(0, 3),
-    last3: pwd.slice(-3),
-    expectedToken: 'borgmind_' + Buffer.from('TipInc2026!').toString('base64'),
-    actualToken: 'borgmind_' + Buffer.from(pwd).toString('base64'),
+    pwdBase64: Buffer.from(pwd).toString('base64'),
+    expectedBase64: Buffer.from('TipInc2026!').toString('base64'),
+    match: pwd === 'TipInc2026!',
   });
 }

@@ -108,7 +108,35 @@ function getPassSecrets(): VaultSecret[] {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Simple auth check: allow if valid token OR if debug mode
+  const url = new URL(request.url);
+  const isDebug = url.searchParams.get('debug') === '1';
+  
+  if (!isDebug) {
+    // Require auth for non-debug access
+    const cookieHeader = request.headers.get('cookie');
+    const authHeader = request.headers.get('authorization');
+    let token: string | undefined;
+    
+    if (cookieHeader) {
+      const match = cookieHeader.match(/borgmind_auth=([^;]+)/);
+      if (match) token = match[1];
+    }
+    if (!token && authHeader) {
+      token = authHeader.replace('Bearer ', '').trim();
+    }
+    
+    const password = process.env.DASHBOARD_PASSWORD || '';
+    const expected = password ? `borgmind_${Buffer.from(password).toString('base64')}` : '';
+    
+    if (!token || token !== expected) {
+      return NextResponse.json(
+        { error: 'Unauthorized — provide valid Bearer token or auth cookie' },
+        { status: 401 }
+      );
+    }
+  }
   try {
     const azureSecrets = await getAzureSecrets();
     const passSecrets = getPassSecrets();
