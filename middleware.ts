@@ -16,7 +16,7 @@ function verifyAuthToken(token: string | undefined, password: string): boolean {
 }
 
 function getDashboardPassword(): string {
-  return process.env.DASHBOARD_PASSWORD || '';
+  return (process.env.DASHBOARD_PASSWORD || '').trim();
 }
 
 function isAuthenticated(request: NextRequest): boolean {
@@ -60,7 +60,6 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/login') ||
     pathname.startsWith('/api/debug-env') ||
-    pathname.startsWith('/api/vault') ||
     pathname.startsWith('/favicon')
   ) {
     return NextResponse.next();
