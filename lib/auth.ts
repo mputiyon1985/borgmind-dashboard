@@ -34,7 +34,7 @@ export function isAuthenticated(request: Request): boolean {
   const cookieHeader = request.headers.get('cookie');
   if (cookieHeader) {
     const cookies = parseCookies(cookieHeader);
-    const token = cookies[AUTH_COOKIE_NAME];
+    const token = decodeURIComponent(cookies[AUTH_COOKIE_NAME] || '');
     if (verifyAuthToken(token, password)) {
       return true;
     }

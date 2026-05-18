@@ -28,7 +28,7 @@ function isAuthenticated(request: NextRequest): boolean {
 
   // Check cookie
   const cookie = request.cookies.get(AUTH_COOKIE_NAME);
-  if (cookie && verifyAuthToken(cookie.value, password)) {
+  if (cookie && verifyAuthToken(decodeURIComponent(cookie.value), password)) {
     return true;
   }
 
