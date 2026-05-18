@@ -1,75 +1,92 @@
 import { NextResponse } from 'next/server';
-
-const TURSO_URL = process.env.TURSO_URL || process.env.BORGMIND_DB_URL?.replace('libsql://', 'https://') || '';
-const TURSO_TOKEN = process.env.TURSO_TOKEN || process.env.BORGMIND_TOKEN || '';
+import { execSync } from 'child_process';
 
 interface VaultSecret {
   name: string;
   description: string;
   lastModified: string;
   status: 'active' | 'expired' | 'warning';
+  source: 'azure' | 'pass';
+}
+
+function getPassSecrets(): VaultSecret[] {
+  try {
+    const storePath = `${process.env.HOME}/.password-store`;
+    const entries = execSync(
+      `find "${storePath}" -name "*.gpg" -type f 2>/dev/null | sed 's|${storePath}/||g' | sed 's|\\.gpg$||'`,
+      { encoding: 'utf-8', timeout: 10000 }
+    );
+    const lines = entries.trim().split('\n').filter(Boolean);
+    return lines.map((name) => {
+      let modified = 'unknown';
+      try {
+        const stat = execSync(
+          `stat -f "%Sm" -t "%Y-%m-%d" "${storePath}/${name}.gpg" 2>/dev/null || stat -c "%y" "${storePath}/${name}.gpg" 2>/dev/null | cut -d' ' -f1`,
+          { encoding: 'utf-8', timeout: 5000 }
+        ).trim();
+        if (stat) modified = stat;
+      } catch { /* ignore stat errors */ }
+      return {
+        name,
+        description: `Local pass store: ${name}`,
+        lastModified: modified,
+        status: 'active' as const,
+        source: 'pass' as const,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+function getAzureSecrets(): VaultSecret[] {
+  try {
+    const raw = execSync(
+      'az keyvault secret list --vault-name "kv-cpapex" --subscription "Visual Studio Enterprise – MPN" 2>/dev/null',
+      { encoding: 'utf-8', timeout: 30000, env: { ...process.env, AZURE_CORE_ONLY_SHOW_ERRORS: '1' } }
+    );
+    const secrets = JSON.parse(raw);
+    return secrets.map((s: any) => {
+      const updated = s.attributes?.updated;
+      const created = s.attributes?.created;
+      const dateStr = updated || created || 'unknown';
+      // Format: 2026-04-30T11:30:23+00:00 → 2026-04-30
+      const lastModified = dateStr ? dateStr.split('T')[0] : 'unknown';
+      const enabled = s.attributes?.enabled ?? true;
+      // Compute status based on age
+      let status: 'active' | 'expired' | 'warning' = 'active';
+      if (!enabled) {
+        status = 'expired';
+      } else if (updated) {
+        const daysOld = (Date.now() - new Date(updated).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysOld > 180) status = 'expired';
+        else if (daysOld > 90) status = 'warning';
+      }
+      return {
+        name: s.name,
+        description: `Azure Key Vault (kv-cpapex): ${s.name}`,
+        lastModified,
+        status,
+        source: 'azure' as const,
+      };
+    });
+  } catch {
+    return [];
+  }
 }
 
 export async function GET() {
   try {
-    // Vault secrets - hardcoded for now, could be fetched from Turso or Azure KV
-    const secrets: VaultSecret[] = [
-      {
-        name: 'TURSO_URL',
-        description: 'Turso Database URL for BorgMind',
-        lastModified: '2026-05-15',
-        status: 'active'
-      },
-      {
-        name: 'TURSO_TOKEN',
-        description: 'Turso Auth Token (Pepper)',
-        lastModified: '2026-05-15',
-        status: 'active'
-      },
-      {
-        name: 'JARVIS_TOKEN',
-        description: 'Agent token for Jarvis',
-        lastModified: '2026-05-10',
-        status: 'active'
-      },
-      {
-        name: 'TONY_TOKEN',
-        description: 'Agent token for Tony',
-        lastModified: '2026-05-10',
-        status: 'active'
-      },
-      {
-        name: 'RHODEY_TOKEN',
-        description: 'Agent token for Rhodey',
-        lastModified: '2026-05-10',
-        status: 'active'
-      },
-      {
-        name: 'OLLAMA_API_KEY',
-        description: 'Ollama Cloud API Key',
-        lastModified: '2026-05-17',
-        status: 'active'
-      },
-      {
-        name: 'AZURE_SP_SECRET',
-        description: 'Azure Service Principal Secret',
-        lastModified: '2026-04-20',
-        status: 'warning'
-      },
-      {
-        name: 'GITHUB_PAT',
-        description: 'GitHub Personal Access Token',
-        lastModified: '2026-03-15',
-        status: 'expired'
-      }
-    ];
+    const passSecrets = getPassSecrets();
+    const azureSecrets = getAzureSecrets();
+    const secrets = [...azureSecrets, ...passSecrets];
 
     return NextResponse.json({
       secrets,
       total: secrets.length,
-      active: secrets.filter(s => s.status === 'active').length,
-      expired: secrets.filter(s => s.status === 'expired').length,
-      warning: secrets.filter(s => s.status === 'warning').length
+      active: secrets.filter((s) => s.status === 'active').length,
+      expired: secrets.filter((s) => s.status === 'expired').length,
+      warning: secrets.filter((s) => s.status === 'warning').length,
     });
   } catch (error) {
     console.error('Vault API error:', error);

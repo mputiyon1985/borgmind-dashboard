@@ -1,5 +1,6 @@
 import { createClient } from '@libsql/client';
 import { NextResponse } from 'next/server';
+import { isAuthenticated, unauthorizedResponse } from '@/lib/auth';
 
 function getClient() {
   return createClient({
@@ -8,7 +9,11 @@ function getClient() {
   });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!isAuthenticated(request)) {
+    return unauthorizedResponse();
+  }
+
   const client = getClient();
   
   try {

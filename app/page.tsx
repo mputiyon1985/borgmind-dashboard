@@ -370,6 +370,11 @@ function VaultTab() {
     warning: 'bg-yellow-900/50 text-yellow-400'
   };
 
+  const sourceEmoji: Record<string, string> = {
+    azure: '☁️ Azure',
+    pass: '🔒 pass',
+  };
+
   return (
     <div>
       <div className="grid grid-cols-4 gap-4 mb-6">
@@ -406,6 +411,9 @@ function VaultTab() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-400 bg-slate-700/50 px-2 py-0.5 rounded">
+                    {sourceEmoji[secret.source] || secret.source}
+                  </span>
                   <span className={`text-xs px-2 py-1 rounded ${statusColors[secret.status as keyof typeof statusColors]}`}>
                     {secret.status}
                   </span>
