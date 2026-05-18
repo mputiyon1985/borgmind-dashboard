@@ -16,7 +16,7 @@ function verifyAuthToken(token: string | undefined, password: string): boolean {
 }
 
 function getDashboardPassword(): string {
-  return (process.env.DASHBOARD_PASSWORD || '').trim();
+  return '';
 }
 
 function isAuthenticated(request: NextRequest): boolean {
