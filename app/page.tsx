@@ -56,6 +56,25 @@ function timeAgo(dateStr: string | null): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function formatDateTime(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    // Format: MM/DD/YY HH:MM AM/PM EDT
+    return d.toLocaleString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZoneName: 'short'
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
 const AGENT_ORDER = ['pepper', 'jarvis', 'tony', 'rhodey'];
 const AGENT_EMOJI: Record<string, string> = {
   pepper: '🌶️',
@@ -210,6 +229,193 @@ function ActivityTab() {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// ─────────────── COMMS TAB ───────────────
+function CommsTab() {
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+
+  const fetchMessages = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({ limit: '50' });
+      if (filter) params.set('agent', filter);
+      const res = await fetch(`/api/comms?${params}`);
+      const data = await res.json();
+      setMessages(data.messages || []);
+      setLoading(false);
+    } catch (e) {
+      console.error('Failed to fetch messages:', e);
+      setLoading(false);
+    }
+  }, [filter]);
+
+  useEffect(() => { fetchMessages(); }, [fetchMessages]);
+
+  const agentEmoji: Record<string, string> = {
+    pepper: '🌶️',
+    jarvis: '🤖',
+    tony: '⚙️',
+    rhodey: '🛡️',
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <select
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            className="bg-slate-800 border border-slate-700 text-slate-300 rounded px-3 py-1.5 text-sm"
+          >
+            <option value="">All Agents</option>
+            <option value="pepper">🌶️ Pepper</option>
+            <option value="jarvis">🤖 Jarvis</option>
+            <option value="tony">⚙️ Tony</option>
+            <option value="rhodey">🛡️ Rhodey</option>
+          </select>
+          <button
+            onClick={fetchMessages}
+            className="bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-sm transition"
+          >
+            ↻ Refresh
+          </button>
+        </div>
+        <span className="text-sm text-slate-400">
+          {messages.length} messages
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-8 text-slate-500">Loading messages...</div>
+      ) : messages.length === 0 ? (
+        <div className="text-center py-8 text-slate-500">
+          💬 No messages yet. Send one via BorgComms!
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {messages.map((msg: any) => (
+            <div
+              key={msg.id}
+              className={`bg-slate-800/50 border rounded-lg p-3 ${
+                msg.status === 'unread' ? 'border-l-4 border-l-blue-500 border-blue-900/50' : 'border-slate-700'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className={agentColor(msg.sender)}>
+                    {agentEmoji[msg.sender] || '👤'} <span className="font-semibold">{msg.sender}</span>
+                  </span>
+                  <span className="text-slate-500">→</span>
+                  <span className="text-slate-400">
+                    {msg.recipient === 'broadcast' ? '📢 All' : (agentEmoji[msg.recipient] || '👤') + ' ' + msg.recipient}
+                  </span>
+                  {msg.priority >= 3 && (
+                    <span className="text-red-400 text-xs">🔴</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-2 py-0.5 rounded ${
+                    msg.status === 'unread' ? 'bg-blue-900/50 text-blue-400' : 'bg-green-900/50 text-green-400'
+                  }`}>
+                    {msg.status === 'unread' ? '● New' : '✓ Read'}
+                  </span>
+                  <span className="text-xs text-slate-500">{timeAgo(msg.timestamp)}</span>
+                  <span className="text-xs text-slate-600">({formatDateTime(msg.timestamp)})</span>
+                </div>
+              </div>
+              <div className="text-slate-300 text-sm mt-1 pl-6">
+                {msg.text || msg.payload?.text || msg.payload?.message || 'No message content'}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────── VAULT TAB ───────────────
+function VaultTab() {
+  const [secrets, setSecrets] = useState<any[]>([]);
+  const [stats, setStats] = useState({ total: 0, active: 0, expired: 0, warning: 0 });
+  const [loading, setLoading] = useState(true);
+
+  const fetchVault = useCallback(async () => {
+    try {
+      const res = await fetch('/api/vault');
+      const data = await res.json();
+      setSecrets(data.secrets || []);
+      setStats({
+        total: data.total || 0,
+        active: data.active || 0,
+        expired: data.expired || 0,
+        warning: data.warning || 0
+      });
+      setLoading(false);
+    } catch (e) {
+      console.error('Failed to fetch vault:', e);
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchVault(); }, [fetchVault]);
+
+  const statusColors = {
+    active: 'bg-green-900/50 text-green-400',
+    expired: 'bg-red-900/50 text-red-400',
+    warning: 'bg-yellow-900/50 text-yellow-400'
+  };
+
+  return (
+    <div>
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="bg-slate-800 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-blue-400">{stats.total}</div>
+          <div className="text-xs text-slate-500">Total Secrets</div>
+        </div>
+        <div className="bg-slate-800 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-green-400">{stats.active}</div>
+          <div className="text-xs text-slate-500">Active</div>
+        </div>
+        <div className="bg-slate-800 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-yellow-400">{stats.warning}</div>
+          <div className="text-xs text-slate-500">Warning</div>
+        </div>
+        <div className="bg-slate-800 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-red-400">{stats.expired}</div>
+          <div className="text-xs text-slate-500">Expired</div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-8 text-slate-500">Loading vault secrets...</div>
+      ) : (
+        <div className="space-y-2">
+          {secrets.map((secret: any) => (
+            <div key={secret.name} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">🔑</span>
+                  <div>
+                    <div className="font-semibold text-slate-300">{secret.name}</div>
+                    <div className="text-sm text-slate-500">{secret.description}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-2 py-1 rounded ${statusColors[secret.status as keyof typeof statusColors]}`}>
+                    {secret.status}
+                  </span>
+                  <span className="text-xs text-slate-500">Modified: {secret.lastModified}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -546,7 +752,26 @@ export default function BorgMindDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [secondsAgo, setSecondsAgo] = useState(0);
-  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'memory'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'memory' | 'comms' | 'vault'>('overview');
+
+  // ── Tab persistence via URL query param ──
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const tabFromUrl = searchParams.get('tab');
+    const validTabs: Array<typeof activeTab> = ['overview', 'activity', 'memory', 'comms', 'vault'];
+    if (tabFromUrl && validTabs.includes(tabFromUrl as typeof activeTab)) {
+      setActiveTab(tabFromUrl as typeof activeTab);
+    }
+  }, []);
+
+  const setTab = useCallback((tab: typeof activeTab) => {
+    setActiveTab(tab);
+    if (typeof window === 'undefined') return;
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('tab', tab);
+    window.history.pushState({}, '', newUrl);
+  }, []);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -623,10 +848,12 @@ export default function BorgMindDashboard() {
             { key: 'overview', label: '📊 Overview' },
             { key: 'activity', label: '📡 Activity Log' },
             { key: 'memory', label: '🧠 Memory Browser' },
+            { key: 'comms', label: '💬 Chat Log' },
+            { key: 'vault', label: '🔐 Vault' },
           ] as const).map(tab => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => setTab(tab.key)}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.key
                   ? 'bg-blue-600 text-white shadow'
@@ -656,6 +883,8 @@ export default function BorgMindDashboard() {
         )}
         {activeTab === 'activity' && <ActivityTab />}
         {activeTab === 'memory' && <MemoryTab />}
+        {activeTab === 'comms' && <CommsTab />}
+        {activeTab === 'vault' && <VaultTab />}
       </div>
     </div>
   );
