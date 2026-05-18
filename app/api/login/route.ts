@@ -13,7 +13,8 @@ export async function POST(request: Request) {
       );
     }
 
-    if (password !== expectedPassword) {
+    // Trim both passwords to handle any whitespace/newline issues from env vars
+    if (password.trim() !== expectedPassword.trim()) {
       return NextResponse.json(
         { error: 'Invalid password' },
         { status: 401 }

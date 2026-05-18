@@ -19,7 +19,7 @@ export function verifyAuthToken(token: string | undefined, password: string): bo
 }
 
 export function getDashboardPassword(): string {
-  return process.env.DASHBOARD_PASSWORD || '';
+  return (process.env.DASHBOARD_PASSWORD || '').trim();
 }
 
 export function isAuthenticated(request: Request): boolean {

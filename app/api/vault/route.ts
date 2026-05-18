@@ -11,9 +11,9 @@ interface VaultSecret {
 }
 
 function getAzureCredential() {
-  const tenantId = process.env.AZURE_TENANT_ID;
-  const clientId = process.env.AZURE_CLIENT_ID;
-  const clientSecret = process.env.AZURE_CLIENT_SECRET;
+  const tenantId = (process.env.AZURE_TENANT_ID || '').trim();
+  const clientId = (process.env.AZURE_CLIENT_ID || '').trim();
+  const clientSecret = (process.env.AZURE_CLIENT_SECRET || '').trim();
 
   if (tenantId && clientId && clientSecret) {
     return new ClientSecretCredential(tenantId, clientId, clientSecret);
@@ -22,7 +22,7 @@ function getAzureCredential() {
 }
 
 async function getAzureSecrets(): Promise<VaultSecret[]> {
-  const vaultName = process.env.AZURE_KEYVAULT_NAME || 'kv-cpapex';
+  const vaultName = (process.env.AZURE_KEYVAULT_NAME || 'kv-cpapex').trim();
   const vaultUrl = `https://${vaultName}.vault.azure.net`;
 
   try {
@@ -62,7 +62,7 @@ async function getAzureSecrets(): Promise<VaultSecret[]> {
 }
 
 function getPassSecrets(): VaultSecret[] {
-  const passSecretsEnv = process.env.PASS_SECRET_NAMES;
+  const passSecretsEnv = (process.env.PASS_SECRET_NAMES || '').trim();
   if (passSecretsEnv) {
     return passSecretsEnv.split(',').filter(Boolean).map(name => ({
       name: name.trim(),
