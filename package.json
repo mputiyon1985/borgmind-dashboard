@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.1",
+    "@azure/keyvault-secrets": "^4.11.2",
     "@libsql/client": "^0.17.3",
     "@vercel/blob": "^2.3.3",
     "next": "16.2.6",
