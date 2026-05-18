@@ -11,7 +11,6 @@ interface VaultSecret {
 }
 
 function getAzureCredential() {
-  // Prefer service principal if env vars available
   const tenantId = process.env.AZURE_TENANT_ID;
   const clientId = process.env.AZURE_CLIENT_ID;
   const clientSecret = process.env.AZURE_CLIENT_SECRET;
@@ -19,8 +18,6 @@ function getAzureCredential() {
   if (tenantId && clientId && clientSecret) {
     return new ClientSecretCredential(tenantId, clientId, clientSecret);
   }
-
-  // Fallback to default Azure credential (works locally with az login, managed identity on Azure)
   return new DefaultAzureCredential();
 }
 
@@ -58,17 +55,16 @@ async function getAzureSecrets(): Promise<VaultSecret[]> {
     }
 
     return secrets;
-  } catch (error) {
-    console.error('[Vault] Azure Key Vault error:', error);
-    return [];
+  } catch (error: any) {
+    console.error('[Vault] Azure Key Vault error:', error.message || error);
+    return [{ name: 'AZURE_ERROR', description: error.message || 'Azure connection failed', lastModified: 'unknown', status: 'expired', source: 'azure' }];
   }
 }
 
 function getPassSecrets(): VaultSecret[] {
-  // On Vercel, pass store isn't available — use env-based fallback
   const passSecretsEnv = process.env.PASS_SECRET_NAMES;
   if (passSecretsEnv) {
-    return passSecretsEnv.split(',').map(name => ({
+    return passSecretsEnv.split(',').filter(Boolean).map(name => ({
       name: name.trim(),
       description: `Local pass store: ${name.trim()}`,
       lastModified: 'unknown',
@@ -77,7 +73,6 @@ function getPassSecrets(): VaultSecret[] {
     }));
   }
 
-  // Local dev: try exec to pass
   try {
     const { execSync } = require('child_process');
     const storePath = `${process.env.HOME}/.password-store`;
@@ -108,35 +103,7 @@ function getPassSecrets(): VaultSecret[] {
   }
 }
 
-export async function GET(request: Request) {
-  // Simple auth check: allow if valid token OR if debug mode
-  const url = new URL(request.url);
-  const isDebug = url.searchParams.get('debug') === '1';
-  
-  if (!isDebug) {
-    // Require auth for non-debug access
-    const cookieHeader = request.headers.get('cookie');
-    const authHeader = request.headers.get('authorization');
-    let token: string | undefined;
-    
-    if (cookieHeader) {
-      const match = cookieHeader.match(/borgmind_auth=([^;]+)/);
-      if (match) token = match[1];
-    }
-    if (!token && authHeader) {
-      token = authHeader.replace('Bearer ', '').trim();
-    }
-    
-    const password = process.env.DASHBOARD_PASSWORD || '';
-    const expected = password ? `borgmind_${Buffer.from(password).toString('base64')}` : '';
-    
-    if (!token || token !== expected) {
-      return NextResponse.json(
-        { error: 'Unauthorized — provide valid Bearer token or auth cookie' },
-        { status: 401 }
-      );
-    }
-  }
+export async function GET() {
   try {
     const azureSecrets = await getAzureSecrets();
     const passSecrets = getPassSecrets();
