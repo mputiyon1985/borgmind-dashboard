@@ -234,6 +234,144 @@ function ActivityTab() {
   );
 }
 
+// ─────────────── PEOPLE TAB ───────────────
+function PeopleTab() {
+  const [people, setPeople] = useState<any[]>([]);
+  const [stats, setStats] = useState({ total: 0, active: 0, human: 0, agent: 0 });
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('');
+
+  const fetchPeople = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({ limit: '100' });
+      if (filter) params.set('search', filter);
+      const res = await fetch(`/api/people?${params}`);
+      const data = await res.json();
+      setPeople(data.people || []);
+      const all = data.people || [];
+      setStats({
+        total: data.total || 0,
+        active: all.filter((p: any) => p.status === 'active').length,
+        human: all.filter((p: any) => p.role !== 'Engineering Agent' && p.role !== 'Tech Agent' && p.role !== 'Ops Agent' && p.role !== 'PM Agent').length,
+        agent: all.filter((p: any) => p.role === 'Engineering Agent' || p.role === 'Tech Agent' || p.role === 'Ops Agent' || p.role === 'PM Agent').length,
+      });
+      setLoading(false);
+    } catch (e) {
+      console.error('People fetch error:', e);
+      setLoading(false);
+    }
+  }, [filter]);
+
+  useEffect(() => { fetchPeople(); }, [fetchPeople]);
+
+  const sourceEmoji: Record<string, string> = {
+    telegram: '📱',
+    discord: '💬',
+    memory: '🧠',
+    system: '⚙️',
+    unknown: '❓',
+  };
+
+  const statusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-900/50 text-green-400';
+      case 'inactive': return 'bg-gray-800 text-gray-400';
+      case 'suspended': return 'bg-red-900/50 text-red-400';
+      default: return 'bg-slate-700 text-slate-300';
+    }
+  };
+
+  return (
+    <div>
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="bg-slate-800 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-blue-400">{stats.total}</div>
+          <div className="text-xs text-slate-500">Total People</div>
+        </div>
+        <div className="bg-slate-800 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-green-400">{stats.active}</div>
+          <div className="text-xs text-slate-500">Active</div>
+        </div>
+        <div className="bg-slate-800 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-pink-400">{stats.human}</div>
+          <div className="text-xs text-slate-500">Humans</div>
+        </div>
+        <div className="bg-slate-800 rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-purple-400">{stats.agent}</div>
+          <div className="text-xs text-slate-500">Agents</div>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="flex items-center space-x-3 mb-4">
+        <input
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+          placeholder="Search people..."
+          className="flex-1 bg-slate-800 border border-slate-700 text-slate-300 rounded px-3 py-1.5 text-sm placeholder-slate-500"
+        />
+        <button
+          onClick={fetchPeople}
+          className="bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded text-sm transition"
+        >
+          ↻ Refresh
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-8 text-slate-500">Loading people...</div>
+      ) : people.length === 0 ? (
+        <div className="text-center py-8 text-slate-500">No people found</div>
+      ) : (
+        <div className="space-y-2">
+          {people.map((p: any) => (
+            <div key={p.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-800 transition">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">
+                    {p.role === 'CTO' ? '👨‍💼' :
+                     p.role === 'Family' ? '👩‍❤️‍👨' :
+                     p.role === 'PM Agent' ? '🌶️' :
+                     p.role === 'Engineering Agent' ? '🤖' :
+                     p.role === 'Tech Agent' ? '⚙️' :
+                     p.role === 'Ops Agent' ? '🛡️' : '👤'}
+                  </span>
+                  <div>
+                    <div className="font-semibold text-slate-200 flex items-center gap-2">
+                      {p.name}
+                      <span className={`text-xs px-2 py-0.5 rounded ${statusColor(p.status)}`}>
+                        {p.status}
+                      </span>
+                    </div>
+                    <div className="text-sm text-slate-500 flex items-center gap-2">
+                      {p.role}
+                      {p.email && <span>· {p.email}</span>}
+                      {p.telegram_id && <span>· TG: {p.telegram_id}</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right text-xs text-slate-500">
+                  <div className="flex items-center gap-1">
+                    {sourceEmoji[p.source] || '❓'} {p.source}
+                  </div>
+                  <div>Last seen: {timeAgo(p.last_seen)}</div>
+                  <div>Joined: {formatDateTime(p.created_at)}</div>
+                </div>
+              </div>
+              {p.notes && (
+                <div className="mt-2 text-xs text-slate-500 pl-11">
+                  {p.notes}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─────────────── COMMS TAB ───────────────
 function CommsTab() {
   const [messages, setMessages] = useState<any[]>([]);
@@ -902,6 +1040,7 @@ export default function BorgMindDashboard() {
         {activeTab === 'overview' && data && (
           <OverviewTab data={data} fetchStatus={fetchStatus} />
         )}
+        {activeTab === 'people' && <PeopleTab />}
         {activeTab === 'activity' && <ActivityTab />}
         {activeTab === 'memory' && <MemoryTab />}
         {activeTab === 'comms' && <CommsTab />}
