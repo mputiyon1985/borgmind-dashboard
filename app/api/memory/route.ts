@@ -1,7 +1,12 @@
 import { createClient } from '@libsql/client';
 import { NextResponse } from 'next/server';
+import { isAuthenticated, unauthorizedResponse } from '@/lib/auth';
 
 export async function GET(request: Request) {
+  if (!isAuthenticated(request)) {
+    return unauthorizedResponse();
+  }
+
   const { searchParams } = new URL(request.url);
   const category = searchParams.get('category') || null;
   const search = searchParams.get('search') || null;

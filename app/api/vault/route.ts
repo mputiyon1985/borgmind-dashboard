@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { execSync } from 'child_process';
+import { isAuthenticated, unauthorizedResponse } from '@/lib/auth';
 
 interface VaultSecret {
   name: string;
@@ -75,7 +76,11 @@ function getAzureSecrets(): VaultSecret[] {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  if (!isAuthenticated(request)) {
+    return unauthorizedResponse();
+  }
+
   try {
     const passSecrets = getPassSecrets();
     const azureSecrets = getAzureSecrets();

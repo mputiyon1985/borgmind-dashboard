@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isAuthenticated, unauthorizedResponse } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  if (!isAuthenticated(request)) {
+    return unauthorizedResponse();
+  }
+
   try {
     const { slug } = await params;
     

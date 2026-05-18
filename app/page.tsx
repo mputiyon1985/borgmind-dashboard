@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface StatusData {
   db: {
@@ -755,19 +756,20 @@ function OverviewTab({ data, fetchStatus }: { data: StatusData; fetchStatus: () 
 
 // ─────────────── MAIN DASHBOARD ───────────────
 export default function BorgMindDashboard() {
+  const router = useRouter();
   const [data, setData] = useState<StatusData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [secondsAgo, setSecondsAgo] = useState(0);
-  const [activeTab, setActiveTab] = useState<'overview' | 'activity' | 'memory' | 'comms' | 'vault'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'people' | 'activity' | 'memory' | 'comms' | 'vault'>('overview');
 
   // ── Tab persistence via URL query param ──
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const searchParams = new URLSearchParams(window.location.search);
     const tabFromUrl = searchParams.get('tab');
-    const validTabs: Array<typeof activeTab> = ['overview', 'activity', 'memory', 'comms', 'vault'];
+    const validTabs: Array<typeof activeTab> = ['overview', 'people', 'activity', 'memory', 'comms', 'vault'];
     if (tabFromUrl && validTabs.includes(tabFromUrl as typeof activeTab)) {
       setActiveTab(tabFromUrl as typeof activeTab);
     }
@@ -845,6 +847,16 @@ export default function BorgMindDashboard() {
             >
               ↻ Refresh
             </button>
+            <button
+              onClick={async () => {
+                await fetch('/api/logout', { method: 'POST' });
+                router.push('/login');
+                router.refresh();
+              }}
+              className="mt-1 ml-3 text-xs text-slate-500 hover:text-red-400 transition-colors"
+            >
+              🚪 Logout
+            </button>
           </div>
         </div>
       </div>
@@ -854,6 +866,7 @@ export default function BorgMindDashboard() {
         <div className="flex space-x-1 bg-slate-800 rounded-lg p-1 mb-6">
           {([
             { key: 'overview', label: '📊 Overview' },
+            { key: 'people', label: '👥 People' },
             { key: 'activity', label: '📡 Activity Log' },
             { key: 'memory', label: '🧠 Memory Browser' },
             { key: 'comms', label: '💬 Chat Log' },

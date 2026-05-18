@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { list } from '@vercel/blob';
+import { isAuthenticated, unauthorizedResponse } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (!isAuthenticated(request)) {
+    return unauthorizedResponse();
+  }
+
   try {
     const { blobs } = await list({
       prefix: 'docs/',
