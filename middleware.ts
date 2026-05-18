@@ -60,6 +60,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/login') ||
     pathname.startsWith('/api/debug-env') ||
+    pathname.startsWith('/api/vault') ||
     pathname.startsWith('/favicon')
   ) {
     return NextResponse.next();
