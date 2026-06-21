@@ -69,7 +69,7 @@ function formatDateTime(dateStr: string | null): string {
   try {
     const normalized = normalizeTimestamp(dateStr);
     const d = new Date(normalized);
-    // Format: MM/DD/YY HH:MM AM/PM EDT
+    // Format: MM/DD/YY HH:MM AM/PM EDT (force America/New_York timezone)
     return d.toLocaleString('en-US', {
       month: '2-digit',
       day: '2-digit',
@@ -77,6 +77,7 @@ function formatDateTime(dateStr: string | null): string {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true,
+      timeZone: 'America/New_York',
       timeZoneName: 'short'
     });
   } catch {
