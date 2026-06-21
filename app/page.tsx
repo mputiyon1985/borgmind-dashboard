@@ -111,7 +111,11 @@ function ActivityTab() {
     try {
       const res = await fetch(`/api/activity?${params}`);
       const data = await res.json();
-      setEvents(data.events || []);
+      // Sort most recent first (newest timestamp at top)
+      const sorted = [...(data.events || [])].sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      setEvents(sorted);
       setTotal(data.total || 0);
       setLastUpdate(new Date());
     } catch (_) {}
