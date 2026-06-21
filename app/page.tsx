@@ -205,7 +205,7 @@ function ActivityTab() {
             {events.map((event: any, i: number) => (
               <tr key={event.id || i} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition">
                 <td className="p-3 text-slate-500 font-mono text-xs">
-                  {new Date(event.timestamp).toLocaleTimeString()}
+                  {formatDateTime(event.timestamp)}
                 </td>
                 <td className={`p-3 font-medium ${agentColors[event.soul_id] || 'text-slate-300'}`}>
                   {event.soul_id}
@@ -818,8 +818,8 @@ function OverviewTab({ data, fetchStatus }: { data: StatusData; fetchStatus: () 
           ) : (
             data.recent_activity.map((a, i) => (
               <div key={i} className="px-5 py-2.5 flex items-center gap-4 hover:bg-blue-900/10 transition-colors">
-                <span className="text-xs text-gray-600 w-36 flex-shrink-0">
-                  {new Date(a.timestamp).toLocaleTimeString()}
+                <span className="text-xs text-gray-600 w-52 flex-shrink-0">
+                  {formatDateTime(a.timestamp)}
                 </span>
                 <span className={`text-xs font-semibold w-16 flex-shrink-0 ${agentColor(a.soul_id)}`}>
                   {a.soul_id}
