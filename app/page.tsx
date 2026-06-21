@@ -57,10 +57,18 @@ function timeAgo(dateStr: string | null): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function normalizeTimestamp(dateStr: string): string {
+  // Turso/libSQL stores timestamps as UTC without timezone suffix
+  // If no 'Z' or '+00:00', append 'Z' to force UTC parsing
+  const hasTimezone = dateStr.includes('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr);
+  return hasTimezone ? dateStr : `${dateStr}Z`;
+}
+
 function formatDateTime(dateStr: string | null): string {
   if (!dateStr) return '—';
   try {
-    const d = new Date(dateStr);
+    const normalized = normalizeTimestamp(dateStr);
+    const d = new Date(normalized);
     // Format: MM/DD/YY HH:MM AM/PM EDT
     return d.toLocaleString('en-US', {
       month: '2-digit',
