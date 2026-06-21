@@ -440,17 +440,17 @@ function CommsTab() {
             <div
               key={msg.id}
               className={`bg-slate-800/50 border rounded-lg p-3 ${
-                msg.status === 'unread' ? 'border-l-4 border-l-blue-500 border-blue-900/50' : 'border-slate-700'
+                msg.read_status === 'unread' ? 'border-l-4 border-l-blue-500 border-blue-900/50' : 'border-slate-700'
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm">
-                  <span className={agentColor(msg.sender)}>
-                    {agentEmoji[msg.sender] || '👤'} <span className="font-semibold">{msg.sender}</span>
+                  <span className={agentColor(msg.sender_name || '')}>
+                    {agentEmoji[msg.sender_name || ''] || '👤'} <span className="font-semibold">{msg.sender_name || msg.sender || 'unknown'}</span>
                   </span>
                   <span className="text-slate-500">→</span>
                   <span className="text-slate-400">
-                    {msg.recipient === 'broadcast' ? '📢 All' : (agentEmoji[msg.recipient] || '👤') + ' ' + msg.recipient}
+                    {(msg.recipient_name || msg.recipient || '') === 'broadcast' || (msg.recipient_name || msg.recipient || '') === 'all' ? '📢 All' : (agentEmoji[msg.recipient_name || msg.recipient || ''] || '👤') + ' ' + (msg.recipient_name || msg.recipient || '')}
                   </span>
                   {msg.priority >= 3 && (
                     <span className="text-red-400 text-xs">🔴</span>
@@ -458,16 +458,16 @@ function CommsTab() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs px-2 py-0.5 rounded ${
-                    msg.status === 'unread' ? 'bg-blue-900/50 text-blue-400' : 'bg-green-900/50 text-green-400'
+                    (msg.read_status || msg.status) === 'unread' ? 'bg-blue-900/50 text-blue-400' : 'bg-green-900/50 text-green-400'
                   }`}>
-                    {msg.status === 'unread' ? '● New' : '✓ Read'}
+                    {(msg.read_status || msg.status) === 'unread' ? '● New' : '✓ Read'}
                   </span>
                   <span className="text-xs text-slate-500">{timeAgo(msg.timestamp)}</span>
                   <span className="text-xs text-slate-600">({formatDateTime(msg.timestamp)})</span>
                 </div>
               </div>
               <div className="text-slate-300 text-sm mt-1 pl-6">
-                {msg.text || msg.payload?.text || msg.payload?.message || 'No message content'}
+                {msg.message_text || msg.text || msg.payload?.text || msg.payload?.message || 'No message content'}
               </div>
             </div>
           ))}
