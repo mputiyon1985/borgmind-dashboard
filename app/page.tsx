@@ -959,6 +959,18 @@ function OverviewTab({ data, fetchStatus }: { data: StatusData; fetchStatus: () 
                   <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$0.60</td>
                   <td className="px-5 py-2 text-center"><span className="text-xs bg-green-900/40 text-green-400 px-2 py-0.5 rounded-full">Economy</span></td>
                 </tr>
+                <tr className="hover:bg-slate-800/30 transition-colors">
+                  <td className="px-5 py-2 text-gray-300 font-medium">Qwen 3.7 Max</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$0.50</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$2.00</td>
+                  <td className="px-5 py-2 text-center"><span className="text-xs bg-green-900/40 text-green-400 px-2 py-0.5 rounded-full">Economy</span></td>
+                </tr>
+                <tr className="hover:bg-blue-900/10 transition-colors">
+                  <td className="px-5 py-2 text-blue-300 font-semibold">Qwen 3.7 Plus</td>
+                  <td className="px-4 py-2 text-right text-blue-400 font-mono text-xs">$0.20</td>
+                  <td className="px-4 py-2 text-right text-blue-400 font-mono text-xs">$0.80</td>
+                  <td className="px-5 py-2 text-center"><span className="text-xs bg-green-900/40 text-green-400 px-2 py-0.5 rounded-full">Economy</span></td>
+                </tr>
               </tbody>
             </table>
           </div>
