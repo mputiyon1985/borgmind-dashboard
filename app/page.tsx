@@ -897,6 +897,74 @@ function OverviewTab({ data, fetchStatus }: { data: StatusData; fetchStatus: () 
         </div>
       </div>
 
+      {/* Model Costs + Utilization */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-[#1e293b] rounded-xl border border-blue-900/40 overflow-hidden">
+          <div className="px-5 py-3 bg-blue-900/20 border-b border-blue-900/40">
+            <h2 className="text-sm font-semibold text-blue-300 uppercase tracking-wider">💰 Model Utilization</h2>
+          </div>
+          <div className="p-5">
+            <div className="text-gray-500 text-sm">Model usage data coming soon</div>
+          </div>
+        </div>
+
+        <div className="bg-[#1e293b] rounded-xl border border-blue-900/40 overflow-hidden">
+          <div className="px-5 py-3 bg-blue-900/20 border-b border-blue-900/40">
+            <h2 className="text-sm font-semibold text-blue-300 uppercase tracking-wider">💵 Billing Tiers</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-blue-900/20">
+                  <th className="px-5 py-2.5 text-left text-xs text-gray-500 uppercase tracking-wider">Model</th>
+                  <th className="px-4 py-2.5 text-right text-xs text-gray-500 uppercase tracking-wider">Input / 1M</th>
+                  <th className="px-4 py-2.5 text-right text-xs text-gray-500 uppercase tracking-wider">Output / 1M</th>
+                  <th className="px-5 py-2.5 text-center text-xs text-gray-500 uppercase tracking-wider">Tier</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-blue-900/10">
+                <tr className="hover:bg-blue-900/10 transition-colors">
+                  <td className="px-5 py-2 text-gray-300 font-medium">GPT-4o</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$2.50</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$10.00</td>
+                  <td className="px-5 py-2 text-center"><span className="text-xs bg-red-900/40 text-red-400 px-2 py-0.5 rounded-full">Premium</span></td>
+                </tr>
+                <tr className="hover:bg-blue-900/10 transition-colors">
+                  <td className="px-5 py-2 text-gray-300 font-medium">Claude Opus 4</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$15.00</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$75.00</td>
+                  <td className="px-5 py-2 text-center"><span className="text-xs bg-red-900/40 text-red-400 px-2 py-0.5 rounded-full">Premium</span></td>
+                </tr>
+                <tr className="hover:bg-blue-900/10 transition-colors">
+                  <td className="px-5 py-2 text-gray-300 font-medium">Claude Sonnet 4</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$3.00</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$15.00</td>
+                  <td className="px-5 py-2 text-center"><span className="text-xs bg-orange-900/40 text-orange-400 px-2 py-0.5 rounded-full">Standard</span></td>
+                </tr>
+                <tr className="hover:bg-blue-900/10 transition-colors bg-blue-900/5">
+                  <td className="px-5 py-2 text-blue-300 font-semibold">Sonnet 4.6</td>
+                  <td className="px-4 py-2 text-right text-blue-300 font-mono text-xs font-semibold">$3.00</td>
+                  <td className="px-4 py-2 text-right text-blue-300 font-mono text-xs font-semibold">$15.00</td>
+                  <td className="px-5 py-2 text-center"><span className="text-xs bg-orange-900/40 text-orange-400 px-2 py-0.5 rounded-full font-semibold">Standard</span></td>
+                </tr>
+                <tr className="hover:bg-blue-900/10 transition-colors">
+                  <td className="px-5 py-2 text-gray-300 font-medium">Claude Haiku 3.5</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$0.80</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$4.00</td>
+                  <td className="px-5 py-2 text-center"><span className="text-xs bg-green-900/40 text-green-400 px-2 py-0.5 rounded-full">Economy</span></td>
+                </tr>
+                <tr className="hover:bg-blue-900/10 transition-colors">
+                  <td className="px-5 py-2 text-gray-300 font-medium">GPT-4o-mini</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$0.15</td>
+                  <td className="px-4 py-2 text-right text-gray-400 font-mono text-xs">$0.60</td>
+                  <td className="px-5 py-2 text-center"><span className="text-xs bg-green-900/40 text-green-400 px-2 py-0.5 rounded-full">Economy</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       {/* Footer */}
       <div className="text-center text-xs text-gray-700 pb-4">
         BorgMind Status · Auto-refreshes every 30s · {data.fetched_at ? new Date(data.fetched_at).toLocaleString() : ''}
