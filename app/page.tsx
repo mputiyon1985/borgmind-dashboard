@@ -863,7 +863,7 @@ function OverviewTab({ data, fetchStatus }: { data: StatusData; fetchStatus: () 
                   {AGENT_ORDER.map(agent => {
                     const cell = syncMap[tbl]?.[agent];
                     if (!cell) return <td key={agent} className="px-4 py-2.5 text-center text-gray-700 text-xs">—</td>;
-                    const isOk = cell.status === 'success' && cell.failures === 0;
+                    const isOk = (cell.status === 'ok' || cell.status === 'success') && cell.failures === 0;
                     return (
                       <td key={agent} className="px-4 py-2.5 text-center">
                         <span className={`text-xs ${isOk ? 'text-green-400' : 'text-yellow-400'}`}>
